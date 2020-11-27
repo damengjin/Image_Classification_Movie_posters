@@ -1,18 +1,31 @@
-# Image_Classification_Movie_posters
+# Image Classification of Movie Posters
 
-•	Image Preprocessing:
+## 1. Summary of the project
+
+The purpose of this project is to proceed a binary classification on the movie posters (extracted from IMDB), and to learn whether there is any correlation between whether the movie is fresh or rotten and how the posters look. If so, there could be more insights provided to the movie producers for making decisions on movie posters. Transfer learning has been adopted and performed on the google collabtory platform with GPU, in order to handle big calculation. The details will be briefly presented in this Readme file:
+
+## 2. Introduction and pre-processing on the images:
+
 From the dataset, more than 16K valid posters were provided with each poster of size (305, 206, 3). Every poster was then resized to be (224, 224, 3) for the convenience of applying neural networks in the later sessions. Some features of the posters were explored by denoise to separate background from foreground or identify different objects with marked label. These resized posters were then transformed into a large numpy-array (16000, 224, 224, 3), which, together with their corresponding labels of the movie being either fresh or rotten were passed to the deep learning models to be trained. This image classification task was objective to discover the relationship between movie posters and the probability of the movie being fresh, hopefully, providing insights for movie producers on the poster design.
 
-•	Techniques used for boosting CNN performance:
+![alt text](https://github.com/damengjin/Image_Classification_Movie_posters/blob/main/img/1.png)
+![alt text](https://github.com/damengjin/Image_Classification_Movie_posters/blob/main/img/2.png)
+![alt text](https://github.com/damengjin/Image_Classification_Movie_posters/blob/main/img/3.png)
+
+## 3. Techniques used for boosting CNN performance:
+
 1). Data Argumentation:
+
 Image argumentation strategy to boost the performance of deep learning networks due to two main reasons: one is that deep neural networks require a large amount of training data to prevent overfitting, the other one is that the orientation of the image could affect the model performance. Therefore, the image augmentation technique was applied here to artificially creates training images through different ways of processing or combination of multiple processing, such as random rotation, shifting, shearing, and flipping of the input posters. Take the poster of “Sun choke” as an example, with Keras’ ImageDataGenerator API, following augmented images were generated:
 
 2). Transfer Learning: 
+
 In transfer learning, one repurposes the learned features, or transfer the knowledge from a relevant trained task to a second target network wait to be trained. Some pre-trained image networks are VGG-16 from Oxford, and Inceptions from Google. Take the VGG-16 as an example (with its structure illustrated in figure xxx). It contains 13 layers: 5 blocks of convolution layers each with a max-pooling layer for down-sampling; 2 fully connected dense layers, and 1 output layer containing 1000 classes. For transfer learning, the last three layers of the VGG-16 will be dropped, since we would use our own fully connected dense layers to do the binary classification on whether the posters will be fresh or rotten with “sigmoid” as activation function. 
 
 One strategy is to use VGG-16 as feature extraction tool, where all blocks weight will be fixed (non-trainable). While the mostly used strategy is to replace and retrain the classifier on top of the pre-trained networks on the new dataset and also to fine-tune the weights of the pre-trained network by continuing the backpropagation. It is efficient to only fine-tune some high-level portion of the network while keep earlier layers fixed. Because it is discovered in previous research (and later demonstrated in the next session) that the earlier features of a pre-trained network learn more generic features, whereas the deeper layers of the network become progressively more specific to the details of the classes contained in the original dataset. With this strategy, the network is more capable of recognizing the poster patterns. The demonstration of both strategies using VGG-16 pre-trained network is shown in the figure.
 
-•	Models and Results:
+
+## 4. Models and Results:
 Models	Training accuracy	Validation accuracy
 Basic CNN	0.99	0.55
 CNN with Regularization	0.75	0.56
@@ -41,7 +54,9 @@ Transfer Learning InceptionResNetV2 (fine-tuned) with image augmentation
 
 Final chosen model: Transfer Learning VGG-16 (fine-tuned) with image augmentation
 
-•	Visualization of Intermediate layers:
+
+## 5. Visualization of Intermediate layers:
+
 The pre-trained deep CNN models used for transfer learning, like VGG-16 (visual geometry group) and inception architecture, are meant for achieving more effective feature extraction using the existing acknowledge with less data availability. To better understand the pre-trained model on how it is able to classify the input image, it is useful to look at the output of its intermediate layers. Take the InceptionV3 architecture as an example, with a poster input, 3 convolution and their activation layers have been shown below:  
 
 input original poster
@@ -61,11 +76,11 @@ Filters from ReLu Activation layer from ninth convolution layer
 With the help of these visualizations of the intermediate layer, it is pretty clear to see how different filters in different convolution layers are trying to highlight or activate different parts of the input image. Some act as edge detectors, others detect a particular region of the poster like the title, darker colored portion, or background. It is easier to see this behavior of convolution layers in the starting layers (more general patterns), since as model went deeper the pattern captured by the convolution kernel become more and more sparse. Deeper the layers in the network, more training data specific features were visualized. In the next section, another visualization technique, Class Activation Maps (CAM) was used to better interpret the result of the final output.
 
 
-•	Class activation map & Result interpretation:
+## 6. Class activation map & Result interpretation:
+
 Class Activation Maps (CAM) technique is widely used when interpretation of the output is crucial in the use case. For the poster classification, since the objective is to provide movie producers insightful information on the design of posters, CAM was an essential step of the project delivery.  A class activation map for a particular category indicates the discriminative region used by CNN to identify the category. This is achieved by projecting back the weights of the output layer on the convolution feature maps obtained from the last convolution layer (GAP layer, which takes an average cross all the activation to find all the discriminative regions). 
 
 With the 0.623 test accuracy on the 3200 test posters, we sort them by the output probability of being fresh to obtain the top 8 (most likely fresh) and bottom 8 (most likely rotten) posters. Then apply CAM on these posters see what CNN have learned to predict the posters.  
-
 
 From the result, without discuss the accuracy of the prediction, we can see clearly how the final model predict the posters using heatmap. The heatmap shows the score (weight) that the location of the image possesses in predicting the output class of the image. Since this is a binary classification using “sigmoid” function as the output layer, we can focus on the warm region for fresh class, and cold one for rotten class. For the top posters that are predicted fresh (with probability > 0.9), they all have very big title (some titles are stacking) occupying most of the poster content space; and there are very few characters in the poster. For those predicted to be rotten (p < 0.2), the posters tend to have a lot of characters filling up almost the whole poster, and most of these characters are standing in parallel or regular patterns. 
 
